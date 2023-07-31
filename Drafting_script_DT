@@ -1,0 +1,49 @@
+import docx
+import os
+import chardet
+import docx2txt
+import textract
+import striprtf
+import json
+from striprtf.striprtf import rtf_to_text
+data=[]
+def func(file_path):
+    with open(file_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        f.close()
+        return result['encoding']
+def get_file_extension(file_path):
+    _, extension = os.path.splitext(file_path)
+    return extension
+def convert_docx_to_txt(file_path):
+    text = docx2txt.process(file_path)
+    return text
+def read_files_in_subfolders(path):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            extension=get_file_extension(file_path)
+
+            if extension =='.docx':
+              try:
+                text = docx2txt.process(file_path)
+                print(text)
+                data.append({f'{file_path}': f'{text}'})
+              except:
+                  pass
+            if extension == '.rtf':
+                 encod=func(file_path)
+                 with open(file_path, 'r') as f:
+                  try:
+                   contents = f.read()
+                   text=rtf_to_text(contents,encoding=encod)
+                   print(text)
+                   data.append({f'{file_path}': f'{text}'})
+                  except:
+                   pass
+    with open("Drafting_DT.json", "w") as F:
+        json.dump(data, F)
+    F.close()
+
+path = 'your local path goes here'
+read_files_in_subfolders(path)
